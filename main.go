@@ -70,7 +70,21 @@ func main() {
 		}
 
 		// --------Price Extraction with Wait--------
-		priceLocator := page.Locator("span[data-testid='qsp-price']")
+		// Wait for the whole container that wraps price data
+		// container := page.Locator("div.container.yf-16vvaki").First()
+		// html, _ := container.InnerHTML()
+		// log.Printf("Container HTML for %s: %s\n", ticker, html)
+		// if err := container.WaitFor(playwright.LocatorWaitForOptions{
+		// 	State:   playwright.WaitForSelectorStateVisible,
+		// 	Timeout: playwright.Float(10000),
+		// }); err != nil {
+		// 	log.Printf("Price container not found for %s: %v", ticker, err)
+		// 	continue
+		// }
+
+		priceLocator := page.Locator("fin-streamer[data-testid='qsp-price']").First()
+		count, _ := priceLocator.Count()
+		log.Printf("Found %d price elements for %s\n", count, ticker)
 		if err := priceLocator.WaitFor(playwright.LocatorWaitForOptions{
 			State:   playwright.WaitForSelectorStateVisible,
 			Timeout: playwright.Float(5000),
@@ -87,7 +101,9 @@ func main() {
 
 
 		// --------Change Extraction with Wait--------
-		changeLocator := page.Locator("span[data-testid='qsp-price-change-percent']")
+		changeLocator := page.Locator("fin-streamer[data-testid='qsp-price-change-percent']").First()
+		count, _ = changeLocator.Count()
+		log.Printf("Found %d change elements for %s\n", count, ticker)
 		if err := changeLocator.WaitFor(playwright.LocatorWaitForOptions{
 			State:   playwright.WaitForSelectorStateVisible,
 			Timeout: playwright.Float(5000),
@@ -131,5 +147,5 @@ func main() {
 		}
 	}
 
-	fmt.Println("CSV file written successfully!")
+	log.Println("CSV file written successfully!")
 }
