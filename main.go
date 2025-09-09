@@ -1,115 +1,111 @@
 package main
 
 import (
+	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
-	"encoding/csv"
-	"github.com/gocolly/colly/v2"
+	"strings"
 )
 
+type QuoteResponse struct {
+	QuoteResponse struct {
+		Result []struct {
+			Symbol                     string  `json:"symbol"`
+			ShortName                  string  `json:"shortName"`
+			RegularMarketPrice         float64 `json:"regularMarketPrice"`
+			RegularMarketChangePercent float64 `json:"regularMarketChangePercent"`
+		} `json:"result"`
+	} `json:"quoteResponse"`
+}
+
 type Stock struct {
-	company, price, change string
+	Company string
+	Price   string
+	Change  string
 }
 
 func main() {
-	ticker := []string{
-		"MSFT",
-		"IBM",
-		"GE",
-		"UNP",
-		"COST",
-		"MCD",
-		"V",
-		"WMT",
-		"DIS",
-		"MMM",
-		"INTC",
-		"AXP",
-		"AAP",
-		"BA",
-		"CSCO",
-		"GS",
-		"JPM",
-		"CRM",
-		"VZ",
+	tickers := []string{
+		"MSFT", "IBM", "GE", "UNP", "COST",
+		"MCD", "V", "WMT", "DIS", "MMM",
+		"INTC", "AXP", "AAP", "BA", "CSCO",
+		"GS", "JPM", "CRM", "VZ",
 	}
 
 	stocks := []Stock{}
-	c := colly.NewCollector()
 
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
-	
-	c.OnError(func(r *colly.Response, err error) {
-		fmt.Println("Request URL:", r.Request.URL, "failed with response:", r, "\nError:", err)
-	})
+	// Build the Yahoo Finance API URL
+	url := fmt.Sprintf(
+		"https://query1.finance.yahoo.com/v7/finance/quote?symbols=%s",
+		strings.Join(tickers, ","),
+	)
 
-	// Look for <div id="quote-header-info"> ... </div> in the page.
-	c.OnHTML("div#quote-header-info", func(e *colly.HTMLElement) {
-		stock := Stock{}
-		// Inside the div#quote-header-info, find the <h1> element.
-		stock.company = e.ChildText("h1")
-		fmt.Println("Company", stock.company)
-		stock.price = e.ChildText("fin-streamer[data-field='regularMarketPrice']")
-		fmt.Println("Price", stock.price)
-		stock.change = e.ChildText("fin-streamer[data-field='regularMarketChangePercent']")
-		fmt.Println("Change", stock.change)
-
-		stocks = append(stocks, stock)
-	})
-
-	c.OnResponse(func(r *colly.Response) {
-		fmt.Println("Response length:", len(r.Body))
-		fmt.Println(string(r.Body[:1000])) // first 1000 chars
-	})
-
-
-	c.Wait()
-
-	for _, t := range ticker {
-		c.Visit("https://finance.yahoo.com/quote/" + t + "/")
+	// Make HTTP GET request
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatalln("Failed to create request:", err)
 	}
 
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "+
+	"(KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36")
 
-	fmt.Println(stocks)
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalln("Failed to fetch data:", err)
+	}
+	defer resp.Body.Close()
+
+	// check HTTP status code
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("Unexpected HTTP status: %s", resp.Status)
+	}
+
+	// Decode JSON
+	var data QuoteResponse
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		log.Fatalln("Failed to decode JSON:", err)
+	}
+
+	// Extract stock data
+	for _, q := range data.QuoteResponse.Result {
+		stock := Stock{
+			Company: q.ShortName,
+			Price:   fmt.Sprintf("%.2f", q.RegularMarketPrice),
+			Change:  fmt.Sprintf("%.2f%%", q.RegularMarketChangePercent),
+		}
+		fmt.Println(stock.Company, stock.Price, stock.Change)
+		stocks = append(stocks, stock)
+	}
+
+	// Write CSV
 	file, err := os.Create("stocks.csv")
 	if err != nil {
-		log.Fatalln("failed to create the output csv file", err)
+		log.Fatalln("Failed to create CSV file:", err)
 	}
-
-	writer := csv.NewWriter(file)
-	// write the headers to the csv file
-	headers := []string{
-		"company",
-		"price",
-		"change",
-	}
-	writer.Write(headers)
-
-	// write each stock as a record in the csv file
-	for _, stock := range stocks {
-		record := []string{
-			stock.company,
-			stock.price,
-			stock.change,
-		}
-		writer.Write(record)
-	}
-
-	// in go, defers run in the LIFO order when written separately
-	// in this case, defer schedules the entire function to run at the end of the current function, not immediately
 	defer func() {
-		writer.Flush()
-		if err := writer.Error(); err != nil {
-			log.Fatalln("error writing csv:", err)
-		}
-
 		if err := file.Close(); err != nil {
-			log.Fatalln("error closing file:", err)
+			log.Println("Error closing file:", err)
 		}
-		fmt.Println("done")
 	}()
 
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	headers := []string{"company", "price", "change"}
+	if err := writer.Write(headers); err != nil {
+		log.Fatalln("Error writing headers:", err)
+	}
+
+	for _, s := range stocks {
+		record := []string{s.Company, s.Price, s.Change}
+		if err := writer.Write(record); err != nil {
+			log.Println("Error writing record:", err)
+		}
+	}
+
+	fmt.Println("CSV file written successfully!")
 }
