@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"strings"
 	"encoding/csv"
 	"fmt"
 	"log"
@@ -14,14 +16,35 @@ type Stock struct {
 	Change  string
 }
 
-func main() {
-	tickers := []string{
-		"MSFT", "IBM", "GE", "UNP", "COST",
-		"MCD", "V", "WMT", "DIS", "MMM",
-		"INTC", "AXP", "AAP", "BA", "CSCO",
-		"GS", "JPM", "CRM", "VZ",
-	}
+// read stock tickers from the input file
+func readTickers(filename string) ([]string, error) {
+    file, err := os.Open(filename)
+    if err != nil {
+        return nil, err
+    }
+    defer file.Close()
 
+    var tickers []string
+    scanner := bufio.NewScanner(file)
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        if line != "" {
+            tickers = append(tickers, line)
+        }
+    }
+
+    if err := scanner.Err(); err != nil {
+        return nil, err
+    }
+
+    return tickers, nil
+}
+
+func main() {
+	tickers, err := readTickers("tickers.txt")
+	if err != nil {
+		log.Fatalf("Could not read tickers: %v", err)
+	}
 	stocks := []Stock{}
 
 	pw, err := playwright.Run()

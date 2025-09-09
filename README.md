@@ -6,7 +6,7 @@ This project is a Go-based scraper that collects stock information(company name,
 - Extract company name, price, and percentage change
 - Write results to a structured csv file (stocks.csv)
 - Handle multiple stock tickers in a single run
-![Stock price screenshot](example.png)
+![Stock price screenshot](examples/example_csv.png)
 
 # Requirements
 - Go 1.19+
@@ -14,5 +14,4 @@ This project is a Go-based scraper that collects stock information(company name,
 Playwrigt is used to handle dynamic content on Yahoo Finance that cannnot be scraped reliably via static HTTP requests
 
 # Currently working on adding:
-- Input to customize the stock tickers
 - Schedule daily emails about stock price change
