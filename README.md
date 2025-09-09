@@ -4,6 +4,7 @@ This project is a Go-based scraper that collects stock information(company name,
 # Features
 - Fetch live stock data from Yahoo Finance
 - Extract company name, price, and percentage change
+- Customize the list of stock tickers to track
 - Write results to a structured csv file (stocks.csv)
 - Handle multiple stock tickers in a single run
 ![Stock price screenshot](examples/example_csv.png)
