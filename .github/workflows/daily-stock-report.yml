@@ -46,17 +46,31 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           RECIPIENT: ${{ secrets.RECIPIENT_EMAIL }}
         run: |
-          echo "Attached is the daily stock report." | \
+          cat > email_body.txt << EOF
+          Hello,
+
+          Please find attached the daily stock report.
+
+          File: stocks.csv
+          
+          This report was automatically generated and sent from our GitHub Actions workflow.
+          
+          Best regards,
+          Automated Stock Report System
+          EOF
+          
+          CURRENT_DATE=$(date +"%Y-%m-%d")
           s-nail -v \
-            -s "Daily Stock Report" \
-            -S mta="smtp://$SMTP_SERVER:$SMTP_PORT" \
+            -s "Daily Stock Report - ${CURRENT_DATE}" \
+            -S mta="smtps://$SMTP_USERNAME:$SMTP_PASSWORD@$SMTP_SERVER:$SMTP_PORT" \
             -S smtp-use-starttls \
             -S smtp-auth=login \
-            -S smtp-auth-user="$SMTP_USERNAME" \
-            -S smtp-auth-password="$SMTP_PASSWORD" \
+            -S ssl-verify=ignore \
             -S from="$SMTP_USERNAME" \
+            -r "$SMTP_USERNAME" \
             -a stocks.csv \
-            -- "$RECIPIENT"
+            "$RECIPIENT" < email_body.txt
+
 
 
 
