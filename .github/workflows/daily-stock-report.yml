@@ -38,7 +38,7 @@ jobs:
         run: |
           ./stock-scraper
       
-      - name: Send CSV via email with s-nail
+      - name: Send CSV via email
         env:
           SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
           SMTP_PORT: ${{ secrets.SMTP_PORT }}
@@ -47,13 +47,17 @@ jobs:
           RECIPIENT: ${{ secrets.RECIPIENT_EMAIL }}
         run: |
           echo "Attached is the daily stock report." | \
-            s-nail -v \
-              -s "Daily Stock Report" \
-              -S mta="smtp://$SMTP_USERNAME:$SMTP_PASSWORD@$SMTP_SERVER:$SMTP_PORT" \
-              -S smtp-use-starttls \
-              -S ssl-verify=ignore \
-              -a stocks.csv \
-              $RECIPIENT
+          s-nail -v \
+            -s "Daily Stock Report" \
+            -S mta="smtp://$SMTP_SERVER:$SMTP_PORT" \
+            -S smtp-use-starttls \
+            -S smtp-auth=login \
+            -S smtp-auth-user="$SMTP_USERNAME" \
+            -S smtp-auth-password="$SMTP_PASSWORD" \
+            -S from="$SMTP_USERNAME" \
+            -a stocks.csv \
+            -- "$RECIPIENT"
+
 
 
 
