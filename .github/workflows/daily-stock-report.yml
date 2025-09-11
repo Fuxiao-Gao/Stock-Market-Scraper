@@ -49,13 +49,12 @@ jobs:
           echo "Attached is the daily stock report." | \
             s-nail -v \
               -s "Daily Stock Report" \
-              -S smtp="smtp://$SMTP_SERVER:$SMTP_PORT" \
-              -S smtp-auth=login \
-              -S smtp-auth-user=$SMTP_USERNAME \
-              -S smtp-auth-password=$SMTP_PASSWORD \
+              -S mta="smtp://$SMTP_USERNAME:$SMTP_PASSWORD@$SMTP_SERVER:$SMTP_PORT" \
+              -S smtp-use-starttls \
               -S ssl-verify=ignore \
               -a stocks.csv \
               $RECIPIENT
+
 
 
 
