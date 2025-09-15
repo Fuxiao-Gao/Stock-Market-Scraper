@@ -1,5 +1,6 @@
 # Stock Market Scraper
 This project is a Go-based scraper that collects stock information(company name, current price, and daily percentage change) from Yahoo Finance and writes the results to a csv file.
+It also supports sending a scheduled daily email to your email address.
 
 # Features
 - Fetch live stock data from Yahoo Finance
@@ -8,6 +9,7 @@ This project is a Go-based scraper that collects stock information(company name,
 - Write results to a structured csv file (stocks.csv)
 - Send a daily report to your own email address every morning
 ![Stock price screenshot](examples/example_csv.png)
+![Email screenshot](examples/example_email.png)
 
 # Requirements
 - Go
