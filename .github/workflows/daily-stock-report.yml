@@ -39,37 +39,16 @@ jobs:
           ./stock-scraper
       
       - name: Send CSV via email
-        env:
-          SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT }}
-          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
-          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
-          RECIPIENT: ${{ secrets.RECIPIENT_EMAIL }}
-        run: |
-          cat > email_body.txt << EOF
-          Hello,
+        uses: dawidd6/action-send-mail@v6
+        with:
+          connection_url: smtp://${{ secrets.SMTP_USERNAME }}:${{ secrets.SMTP_PASSWORD }}@${{ secrets.SMTP_SERVER }}:${{ secrets.SMTP_PORT }}
+          subject: "Daily Stock Report"
+          to: ${{ secrets.RECIPIENT_EMAIL }}
+          from: ${{ secrets.SMTP_USERNAME }}
+          body: "Please find the attached daily stock report."
+          attachments: stocks.csv
 
-          Please find attached the daily stock report.
-
-          File: stocks.csv
-          
-          This report was automatically generated and sent from our GitHub Actions workflow.
-          
-          Best regards,
-          Automated Stock Report System
-          EOF
-          
-          CURRENT_DATE=$(date +"%Y-%m-%d")
-          s-nail -v \
-            -s "Daily Stock Report - ${CURRENT_DATE}" \
-            -S mta="smtp://$SMTP_USERNAME:$SMTP_PASSWORD@$SMTP_SERVER:$SMTP_PORT" \
-            -S smtp-use-starttls \
-            -S smtp-auth=login \
-            -S ssl-verify=ignore \
-            -S v15-compat=yes \
-            -r "$SMTP_USERNAME" \
-            -a stocks.csv \
-            "$RECIPIENT" < email_body.txt
+    
 
 
 
