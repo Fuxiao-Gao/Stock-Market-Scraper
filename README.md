@@ -7,11 +7,11 @@ It also supports sending a scheduled daily email to your email address.
 - Extract company name, price, and percentage change
 - Customize the list of stock tickers to track
 - Write results to a structured csv file (stocks.csv)
-- Send a daily report to your own email address every morning
+- Send a scheduled daily report to your own email address
 ![Stock price screenshot](examples/example_csv.png)
 ![Email screenshot](examples/example_email.png)
 
 # Requirements
 - Go
 - Playwright for Go
-Playwrigt is used to handle dynamic content on Yahoo Finance that cannnot be scraped reliably via static HTTP requests
+Playwright is used to handle dynamic content on Yahoo Finance that cannnot be scraped reliably via static HTTP requests
